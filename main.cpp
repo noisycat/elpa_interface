@@ -1,6 +1,7 @@
 #include <vector>
 #include <iostream>
 #include "elpa_interface.hpp"
+#include "test_functions.hpp"
 
 using std::vector;
 
@@ -11,6 +12,7 @@ int main()
 	int M = 5000;
 	/* test vector. make sure symmetric */
 	vector< vector<double> > A;
+	Test_FillA(A,N,M);
 	ELPA_Interface<double> elpa;
 	return 0;
 }
