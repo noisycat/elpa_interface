@@ -24,7 +24,7 @@ int main()
 	ELPA_Interface<double> elpa;
 
 	/* Associate Interface with Matrix */
-	elpa.Associate(&A);
+	elpa.Associate(A);
 
 	/* ELPA - BLACS Comms Gen */
 	/* ELPA Comms Gen */

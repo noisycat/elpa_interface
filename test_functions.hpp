@@ -1,5 +1,5 @@
 #include <stdlib.h>
-void Test_FillA(vector< vector< double > > A, const int N, const int M, const int my_seed)
+void Test_FillA(vector< vector< double > > &A, const int N, const int M, const int my_seed)
 {
 	// A is the N x M matrix to fill out
 	
