@@ -1,7 +1,7 @@
-ELPA_LIB=""
+ELPA_LIB=-Wl,-rpath=/workspace/elpa/lib -L/workspace/elpa/lib -lelpa  -mkl=cluster
 # main target
 main : main.o elpa_interface.o
-	$(CXX) $(CXXFLAGS) $^ -o $@ -L$(ELPA_LIB)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(ELPA_LIB)
 
 clean:
 	rm *.o

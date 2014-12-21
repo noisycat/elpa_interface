@@ -33,9 +33,20 @@ template<typename T> class ELPA_Interface {
 		// Constructor 
 		ELPA_Interface() { };
 		// Associate - transfer matrix
-		void Associate(vector< vector<T> >) { };
+		void Associate(vector< vector<T> > *A) 
+		{ 
+			const int N = (*A).size();
+			const int M = (*A)[0].size();
+			this->A.empty(); // shouldn't be necessary, but we're gonna be safe
+			this->A.resize(M*N);
+			for(int i = 0; i < N; i++) {
+				for(int j = 0; j < M; j++) {
+					this->A[M*i+j] = (*A)[i][j];
+				}
+			}
+		};
 		// Estimate - dumps to stdout an estimated time of execution for a matrix, optionally kills if above limit
-		double Estimate() { };
+		double Estimate() { return pow(sqrt(this->A.size()),3)};
 		double Estimate(double timelimit) { };
 		// Create BLACS layout - required to solve
 		void CreateBLACS() { };
