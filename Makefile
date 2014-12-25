@@ -1,3 +1,4 @@
+CXX=mpic++
 ELPA_LIB=-Wl,-rpath=/workspace/elpa/lib -L/workspace/elpa/lib -lelpa  -mkl=cluster
 # main target
 main : main.o elpa_interface.o
