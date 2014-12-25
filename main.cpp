@@ -2,6 +2,7 @@
 #include <iostream>
 #include "elpa_interface.hpp"
 #include "test_functions.hpp"
+#include "mpi.h"
 
 using std::vector;
 
@@ -23,12 +24,15 @@ int main()
 	/* ELPA_Interface */
 	ELPA_Interface<double> elpa;
 
-	/* Associate Interface with Matrix */
+	/* elpa.Solve(A) */
+	/* -Associate Interface with Matrix */
 	elpa.Associate(A);
-
-	/* ELPA - BLACS Comms Gen */
-	/* ELPA Comms Gen */
-	/* ELPA Solve */
+	/* -ELPA - BLACS Comms Gen */
+	elpa.CreateBLACSComms();
+	/* -ELPA Comms Gen */
+	elpa.CreateELPAComms();
+	/* -ELPA Solve */
+	elpa.ReadiedSolve();
 
 	return 0;
 }
