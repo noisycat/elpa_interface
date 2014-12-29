@@ -45,6 +45,7 @@ subroutine solve_provided(op_comm, input_matrix, N, M)
 
    character*256 filename
    integer :: omp_get_max_threads
+   logical :: success
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 
@@ -131,7 +132,6 @@ subroutine solve_provided(op_comm, input_matrix, N, M)
    allocate(a (na_rows,na_cols))
    allocate(z (na_rows,na_cols))
    allocate(as(na_rows,na_cols))
-
    allocate(ev(na))
 
    !-------------------------------------------------------------------------------
@@ -150,7 +150,7 @@ subroutine solve_provided(op_comm, input_matrix, N, M)
    ! Calculate eigenvalues/eigenvectors
 
    call mpi_barrier(mpi_comm_world, mpierr) ! for correct timings only
-   call solve_evp_real(na, nev, a, na_rows, ev, z, na_rows, nblk, &
+   success = solve_evp_real(na, nev, a, na_rows, ev, z, na_rows, nblk, &
                        mpi_comm_rows, mpi_comm_cols)
 
    if(myid == 0) print *,'Time tridiag_real :',time_evp_fwd
@@ -227,6 +227,73 @@ subroutine solve_provided(op_comm, input_matrix, N, M)
    call mpi_finalize(mpierr)
 
 end subroutine solve_provided
+
+!----------------------------------------------------------------------------------
+!
+!----------------------------------------------------------------------------------
+subroutine bcast_matrix(iunit, na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols, op_comm)
+
+   implicit none
+   include 'mpif.h'
+
+   integer, intent(in) :: iunit, na, lda, nblk, my_prow, my_pcol, np_rows, np_cols, op_comm
+   real*8, intent(out) :: a(lda, *)
+
+   integer i, j, lr, lc, myid, mpierr
+   integer, allocatable :: l_row(:), l_col(:)
+
+   real*8, allocatable :: col(:)
+
+   ! allocate and set index arrays
+
+   allocate(l_row(na))
+   allocate(l_col(na))
+
+   ! Mapping of global rows/cols to local
+
+   l_row(:) = 0
+   l_col(:) = 0
+
+   lr = 0 ! local row counter
+   lc = 0 ! local column counter
+
+   do i = 1, na
+
+     if( MOD((i-1)/nblk,np_rows) == my_prow) then
+       ! row i is on local processor
+       lr = lr+1
+       l_row(i) = lr
+     endif
+
+     if( MOD((i-1)/nblk,np_cols) == my_pcol) then
+       ! column i is on local processor
+       lc = lc+1
+       l_col(i) = lc
+     endif
+
+   enddo
+
+   call mpi_comm_rank(op_comm,myid,mpierr)
+   allocate(col(na))
+
+   do i=1,na
+      if(myid==0) read(iunit,*) col(1:i)
+      call mpi_bcast(col,i,MPI_REAL8,0,op_comm,mpierr)
+      if(l_col(i) > 0) then
+         do j=1,i
+            if(l_row(j)>0) a(l_row(j),l_col(i)) = col(j)
+         enddo
+      endif
+      if(l_row(i) > 0) then
+         do j=1,i-1
+            if(l_col(j)>0) a(l_row(i),l_col(j)) = col(j)
+         enddo
+      endif
+   enddo
+
+   deallocate(l_row, l_col, col)
+
+end subroutine bcast_matrix
 
 !-------------------------------------------------------------------------------
 subroutine read_matrix(iunit, na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols)
