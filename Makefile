@@ -1,21 +1,30 @@
 CXX=mpic++
-CXXFLAGS=-O2 -openmp
+FC=mpif90
+CXXFLAGS=-O0 -g -openmp
 ELPA_LIB=-Wl,-rpath=/workspace/elpa/lib -L/workspace/elpa/lib -lelpa  -mkl=cluster
+ELPA_INC=-I/workspace/elpa/include/elpa-2014.06.001/modules -mod /workspace/elpa/include/elpa-2014.06.001/modules
 # main target
-main : main.o elpa_interface.o solve_provided.o
+all : main tests
+
+main : main.o  solve_provided.o
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(ELPA_LIB)
 
 clean:
 	rm -f *.o
-	rm -f main
+	rm -f main numroc_fortran_test
 
 # implicit rules
 %.o : %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ 
 
 %.o : %.F90
-	$(FC) $(FCFLAGS) -c $< -o $@ -I$(ELPA_INC)
+	$(FC) $(FCFLAGS) -c $< -o $@ $(ELPA_INC)
 
 # C++ has so many strange pitfalls. But we live and learn
-main.o : main.cpp elpa_interface.hpp test_functions.hpp
+main.o : main.cpp elpa_interface.hpp test_functions.hpp 
+
+numroc_fortran_test: numroc_fortran_test.o
+	$(FC) $(FCFLAGS) $^ -o $@ $(ELPA_LIB)
+
+tests: numroc_fortran_test
 
