@@ -19,7 +19,6 @@ extern "C" {
 	/* ELPA2 solvers */
 	void solve_evp_real_2stage_(int NA, int NEV, double* A, int LDA, double* EV, double* Q, int LDQ, int NBLK, int MPI_COMM_ROWS, int MPI_COMM_COLS);
 	void solve_evp_complex_2stage_(int NA, int NEV, mycomplex* A, int LDA, double* EV, mycomplex* Q, int LDQ, int NBLK, int MPI_COMM_ROWS, int MPI_COMM_COLS);
-	void solve_full_();
 
 	// haven't checked these
 	void Cblacs_gridinit(int* icontxt, char *order, int* nprow, int *npcol);
@@ -31,6 +30,7 @@ extern "C" {
 
 	//
 	void solve_provided_(MPI_Fint * op_comm, double** input_matrix, int* N, int* M, double** z, int *z_rows, int *z_cols, double ** ev);
+	void solve_full_(MPI_Fint *, double **, int* , double **, int *, int * , double **);
 }
 
 using std::vector;
@@ -127,7 +127,8 @@ template<typename T> class ELPA_Interface {
 			MPI_Fint the_comm_f = MPI_Comm_c2f(*the_comm);
 
 			//solve_provided_(&the_comm_f, &data, &this->N, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
-			solve_full_();
+			//solve_full_(&the_comm_f, &data, &this->N);
+			solve_full_(&the_comm_f, &data, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
 		};
 		void Solve(vector< vector<T> > &A, MPI_Comm* the_comm, int myid, int nprocs, int required_mpi_thread_level, int provided_mpi_thread_level) {
 

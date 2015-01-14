@@ -1,5 +1,13 @@
 #include "config-f90.h"
-subroutine solve_full()
+subroutine solve_full(op_comm, input_matrix, N, &
+z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
+
+!-------------------------------------------------------------------------------
+! Standard eigenvalue problem - REAL version
+!
+! This program makes use of ELPA for a C++-callable routine.
+! MVP
+!-------------------------------------------------------------------------------
 
 !-------------------------------------------------------------------------------
 ! Standard eigenvalue problem - REAL version
@@ -23,9 +31,16 @@ subroutine solve_full()
 #ifdef HAVE_ISO_FORTRAN_ENV
   use iso_fortran_env, only : error_unit
 #endif
+  use iso_c_binding
 
    implicit none
    include 'mpif.h'
+   ! -- beginning of input header
+   integer, intent(in) :: op_comm
+   integer, intent(in) :: N
+   double precision, dimension(1:N,1:N), intent(inout) :: input_matrix 
+   type(C_PTR)  :: z_ptr_c, ev_ptr_c
+   integer, intent(out) :: na_rows_out, na_cols_out
 
    !-------------------------------------------------------------------------------
    ! Please set system size parameters below!
