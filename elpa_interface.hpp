@@ -19,6 +19,7 @@ extern "C" {
 	/* ELPA2 solvers */
 	void solve_evp_real_2stage_(int NA, int NEV, double* A, int LDA, double* EV, double* Q, int LDQ, int NBLK, int MPI_COMM_ROWS, int MPI_COMM_COLS);
 	void solve_evp_complex_2stage_(int NA, int NEV, mycomplex* A, int LDA, double* EV, mycomplex* Q, int LDQ, int NBLK, int MPI_COMM_ROWS, int MPI_COMM_COLS);
+	void solve_full_();
 
 	// haven't checked these
 	void Cblacs_gridinit(int* icontxt, char *order, int* nprow, int *npcol);
@@ -116,6 +117,18 @@ template<typename T> class ELPA_Interface {
 		void Gather() {};
 
 		// Solve from start to finish
+		void Solve2(vector< vector<T> > &A, MPI_Comm* the_comm, int myid, int nprocs, int required_mpi_thread_level, int provided_mpi_thread_level) {
+
+			if(myid==0) this->Associate(A);
+
+			double *data = this->a.data();
+			double *eigvecs, *eigvals;
+			int     eigvecs_rows,  eigvecs_cols;
+			MPI_Fint the_comm_f = MPI_Comm_c2f(*the_comm);
+
+			//solve_provided_(&the_comm_f, &data, &this->N, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
+			solve_full_();
+		};
 		void Solve(vector< vector<T> > &A, MPI_Comm* the_comm, int myid, int nprocs, int required_mpi_thread_level, int provided_mpi_thread_level) {
 
 			if(myid==0) this->Associate(A);

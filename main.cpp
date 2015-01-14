@@ -57,7 +57,8 @@ int main(int argc, char* argv[])
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!
 	/* !!!! elpa.Solve(A) !!!!! */
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!
-	elpa.Solve(A,&the_comm,myid,nprocs,required,provided);
+	//elpa.Solve(A,&the_comm,myid,nprocs,required,provided);
+	elpa.Solve2(A,&the_comm,myid,nprocs,required,provided);
 
 	MPI_Finalize();
 	return 0;
