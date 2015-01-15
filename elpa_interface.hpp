@@ -3,6 +3,7 @@
 #include "mycomplex.h"
 #include "mpi.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <omp.h>
 #include <math.h>
 #include <fstream>
@@ -130,11 +131,21 @@ template<typename T> class ELPA_Interface {
 			eigvecs_cols = 0;
 			MPI_Fint the_comm_f = MPI_Comm_c2f(*the_comm);
 
+#ifdef DEBUG
 			//solve_provided_(&the_comm_f, &data, &this->N, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
 			//solve_full_(&the_comm_f, &data, &this->N);
+			// all of these are input parameters
 			printf("%d %d %p %d %p %d %d %p\n", myid, the_comm_f, data, this->N, eigvecs, eigvecs_rows, eigvecs_cols, eigvals );
+			// Actual do the solve step
+#endif
 			solve_full_(&the_comm_f, &data, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
+#ifdef DEBUG
+			// examine state change
 			printf("%d %d %p %d %p %d %d %p\n", myid, the_comm_f, data, this->N, eigvecs, eigvecs_rows, eigvecs_cols, eigvals );
+#endif
+			// print out eigenvalues in C++
+			FILE* debug = fopen("EVs_c_out.txt","w");
+			for(int i = 0; i < eigvecs_cols; i++) { fprintf(debug,"%d %lf\n",i,eigvals[i]); }
 		};
 		void Solve(vector< vector<T> > &A, MPI_Comm* the_comm, int myid, int nprocs, int required_mpi_thread_level, int provided_mpi_thread_level) {
 

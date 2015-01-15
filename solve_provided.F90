@@ -39,7 +39,7 @@ z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
    integer, intent(in) :: op_comm
    integer(c_int), intent(in) :: N
    double precision, dimension(1:N,1:N), intent(inout) :: input_matrix 
-   type(c_ptr)  :: z_ptr_c, ev_ptr_c
+   type(c_ptr), intent(out)  :: z_ptr_c, ev_ptr_c
    integer, intent(out) :: na_rows_out, na_cols_out
 
    !-------------------------------------------------------------------------------
@@ -88,6 +88,7 @@ z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
    success = .true.
 
    nblk = 16
+   arg4 = "output"
 #if 1
    na = N
    nev = N
@@ -373,7 +374,11 @@ z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
       status = 1
    endif
 
-   deallocate(z)
+   !deallocate(z)
+   z_ptr_c = C_LOC(z)
+   ev_ptr_c = C_LOC(ev)
+   na_rows_out = na_rows
+   na_cols_out = na_cols
    deallocate(tmp1)
    deallocate(tmp2)
    deallocate(ev)
