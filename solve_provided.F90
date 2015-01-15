@@ -37,9 +37,9 @@ z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
    include 'mpif.h'
    ! -- beginning of input header
    integer, intent(in) :: op_comm
-   integer, intent(in) :: N
+   integer(c_int), intent(in) :: N
    double precision, dimension(1:N,1:N), intent(inout) :: input_matrix 
-   type(C_PTR)  :: z_ptr_c, ev_ptr_c
+   type(c_ptr)  :: z_ptr_c, ev_ptr_c
    integer, intent(out) :: na_rows_out, na_cols_out
 
    !-------------------------------------------------------------------------------
@@ -88,9 +88,14 @@ z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
    success = .true.
 
    nblk = 16
-   na = 4000
-   nev = 1500
-
+#if 1
+   na = N
+   nev = N
+#else
+   na = 20
+   nev = 20
+#endif
+#if 0
    if (COMMAND_ARGUMENT_COUNT() == 3) then
       call GET_COMMAND_ARGUMENT(1, arg1)
       call GET_COMMAND_ARGUMENT(2, arg2)
@@ -111,7 +116,7 @@ z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
       read(arg3, *) nblk
       
    endif
-
+#endif
    !-------------------------------------------------------------------------------
    !  MPI Initialization
 

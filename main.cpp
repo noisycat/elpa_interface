@@ -37,19 +37,17 @@ int main(int argc, char* argv[])
 
 
 	/* make sure that Matrix is symmetric - ELPA requires users to ensure themselves it is */
-	if (myid==0) {
 #if defined(TEST1)
-		Test_FillA_Set1(A,N,M,myid);
+	Test_FillA_Set1(A,N,M,myid);
 #elif defined(TEST2)
-		Test_FillA_Set2(A,N,M,myid);
+	Test_FillA_Set2(A,N,M,myid);
 #elif defined(TEST3)
-		Test_FillA_Set3(A,N,M,myid);
+	Test_FillA_Set3(A,N,M,myid);
 #elif defined(TEST4)
-		Test_FillA_Set4(A,N,M,myid);
+	Test_FillA_Set4(A,N,M,myid);
 #else
-		Test_FillA_CommsTest(A,N,M,myid);
+	Test_FillA_CommsTest(A,N,M,myid);
 #endif
-	}
 
 	/* ELPA_Interface */
 	ELPA_Interface<double> elpa;

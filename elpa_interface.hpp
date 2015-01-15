@@ -119,16 +119,22 @@ template<typename T> class ELPA_Interface {
 		// Solve from start to finish
 		void Solve2(vector< vector<T> > &A, MPI_Comm* the_comm, int myid, int nprocs, int required_mpi_thread_level, int provided_mpi_thread_level) {
 
-			if(myid==0) this->Associate(A);
+			this->Associate(A);
 
 			double *data = this->a.data();
 			double *eigvecs, *eigvals;
 			int     eigvecs_rows,  eigvecs_cols;
+			eigvecs = NULL;
+ 			eigvals = NULL;
+			eigvecs_rows = 0;
+			eigvecs_cols = 0;
 			MPI_Fint the_comm_f = MPI_Comm_c2f(*the_comm);
 
 			//solve_provided_(&the_comm_f, &data, &this->N, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
 			//solve_full_(&the_comm_f, &data, &this->N);
+			printf("%d %d %p %d %p %d %d %p\n", myid, the_comm_f, data, this->N, eigvecs, eigvecs_rows, eigvecs_cols, eigvals );
 			solve_full_(&the_comm_f, &data, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
+			printf("%d %d %p %d %p %d %d %p\n", myid, the_comm_f, data, this->N, eigvecs, eigvecs_rows, eigvecs_cols, eigvals );
 		};
 		void Solve(vector< vector<T> > &A, MPI_Comm* the_comm, int myid, int nprocs, int required_mpi_thread_level, int provided_mpi_thread_level) {
 
