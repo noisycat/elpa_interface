@@ -247,7 +247,7 @@ z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
 
    ! We want different random numbers on every process
    ! (otherways A might get rank deficient):
-
+#if 1
    iseed(:) = myid
    call RANDOM_SEED(put=iseed)
 
@@ -265,6 +265,14 @@ z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
      print '(a)','| Random matrix has been symmetrized.'
    end if
 
+#else
+
+   section_matrix(na, a, na_rows, nblk, my_prow, my_pcol, np_rows, np_cols, op_comm, input_matrix)
+   if (myid==0) then
+     print '(a)','| input matrix has been assigned.'
+   end if
+
+#endif
    ! Save original matrix A for later accuracy checks
 
    as = a
@@ -608,7 +616,70 @@ subroutine solve_provided(op_comm, input_matrix, N, M, z_ptr_c, &
 end subroutine solve_provided
 
 !----------------------------------------------------------------------------------
-!
+subroutine section_matrix(na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols, op_comm, a_global)
+
+   implicit none
+   include 'mpif.h'
+
+   integer, intent(in) :: na, lda, nblk, my_prow, my_pcol, np_rows, np_cols, op_comm
+   real*8, intent(out) :: a(lda, *)
+   real*8, intent(in) :: a_global(na,na)
+
+   integer i, j, lr, lc, myid, mpierr
+   integer, allocatable :: l_row(:), l_col(:)
+
+   real*8, allocatable :: col(:)
+
+   ! allocate and set index arrays
+
+   allocate(l_row(na))
+   allocate(l_col(na))
+
+   ! Mapping of global rows/cols to local
+
+   l_row(:) = 0
+   l_col(:) = 0
+
+   lr = 0 ! local row counter
+   lc = 0 ! local column counter
+
+   do i = 1, na
+
+     if( MOD((i-1)/nblk,np_rows) == my_prow) then
+       ! row i is on local processor
+       lr = lr+1
+       l_row(i) = lr
+     endif
+
+     if( MOD((i-1)/nblk,np_cols) == my_pcol) then
+       ! column i is on local processor
+       lc = lc+1
+       l_col(i) = lc
+     endif
+
+   enddo
+
+   call mpi_comm_rank(op_comm,myid,mpierr)
+   allocate(col(na))
+
+   do i=1,na
+      if(myid==0) col(1:i) = a_global(1:i,i)
+      call mpi_bcast(col,i,MPI_REAL8,0,op_comm,mpierr)
+      if(l_col(i) > 0) then
+         do j=1,i
+            if(l_row(j)>0) a(l_row(j),l_col(i)) = col(j)
+         enddo
+      endif
+      if(l_row(i) > 0) then
+         do j=1,i-1
+            if(l_col(j)>0) a(l_row(i),l_col(j)) = col(j)
+         enddo
+      endif
+   enddo
+
+   deallocate(l_row, l_col, col)
+
+end subroutine section_matrix
 !----------------------------------------------------------------------------------
 subroutine bcast_matrix(na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols, op_comm, a_global)
 
