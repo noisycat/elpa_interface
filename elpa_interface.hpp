@@ -10,6 +10,9 @@
 #include <assert.h>
 #include <iomanip>
 
+#ifdef DEBUG
+extern "C" { void plus_(double * A, int * N, double* B); }
+#endif
 extern "C" {
 	/* A reminder - all of these are the recorded FORTRAN interfaces that emulate Scalapack interfaces
 	   so name mangling exists and is a very real thing */
@@ -31,7 +34,7 @@ extern "C" {
 
 	//
 	void solve_provided_(MPI_Fint * op_comm, double** input_matrix, int* N, int* M, double** z, int *z_rows, int *z_cols, double ** ev);
-	void solve_full_(MPI_Fint *, double **, int* , double **, int *, int * , double **);
+	void solve_full_(MPI_Fint *, double *, int* , double **, int *, int * , double **);
 }
 
 using std::vector;
@@ -132,13 +135,19 @@ template<typename T> class ELPA_Interface {
 			MPI_Fint the_comm_f = MPI_Comm_c2f(*the_comm);
 
 #ifdef DEBUG
+			double* B = (double*) calloc(20,sizeof(double));
+			int N = 20;
+			plus_(this->a.data(), &N, this->a.data());
+#endif
+
+#ifdef DEBUG
 			//solve_provided_(&the_comm_f, &data, &this->N, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
 			//solve_full_(&the_comm_f, &data, &this->N);
 			// all of these are input parameters
 			printf("%d %d %p %d %p %d %d %p\n", myid, the_comm_f, data, this->N, eigvecs, eigvecs_rows, eigvecs_cols, eigvals );
 			// Actual do the solve step
 #endif
-			solve_full_(&the_comm_f, &data, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
+			solve_full_(&the_comm_f, data, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
 #ifdef DEBUG
 			// examine state change
 			printf("%d %d %p %d %p %d %d %p\n", myid, the_comm_f, data, this->N, eigvecs, eigvecs_rows, eigvecs_cols, eigvals );

@@ -38,7 +38,7 @@ z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
    ! -- beginning of input header
    integer, intent(in) :: op_comm
    integer(c_int), intent(in) :: N
-   double precision, dimension(1:N,1:N), intent(inout) :: input_matrix 
+   real(c_double), dimension(1:N,1:N), intent(inout) :: input_matrix 
    type(c_ptr), intent(out)  :: z_ptr_c, ev_ptr_c
    integer, intent(out) :: na_rows_out, na_cols_out
 
@@ -77,6 +77,7 @@ z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
    character*16 arg2
    character*16 arg3
    character*16 arg4
+   character*13 filename
 
 #ifndef HAVE_ISO_FORTRAN_ENV
   integer, parameter   :: error_unit = 6
@@ -247,7 +248,7 @@ z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
 
    ! We want different random numbers on every process
    ! (otherways A might get rank deficient):
-#if 1
+#if 0
    iseed(:) = myid
    call RANDOM_SEED(put=iseed)
 
@@ -267,10 +268,15 @@ z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
 
 #else
 
-   section_matrix(na, a, na_rows, nblk, my_prow, my_pcol, np_rows, np_cols, op_comm, input_matrix)
+   call section_matrix(na, a, na_rows, nblk, my_prow, my_pcol, np_rows, &
+   np_cols, op_comm, input_matrix)
    if (myid==0) then
      print '(a)','| input matrix has been assigned.'
    end if
+   write(filename,"(A6,I3.3,A4)") "output",myid,".txt"
+   open(12,file=filename,status="unknown")
+   write(12,"(20E12.5)") (input_matrix(i,:),i=1,20)
+   close(12)
 
 #endif
    ! Save original matrix A for later accuracy checks

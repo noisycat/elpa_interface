@@ -7,7 +7,7 @@ ELPA_INC=-I/workspace/elpa/include/elpa-2014.06.001 -I/workspace/elpa/include/el
 # main target
 all : main tests
 
-main : main.o  solve_provided.o
+main : main.o  solve_provided.o test_input.o
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(ELPA_LIB)
 
 cleanobj:
@@ -20,7 +20,7 @@ cleantests:
 	rm -f numroc_fortran_test test_real2
 
 cleanoutput:
-	rm -f EVs_real2_out.txt EVs_c_out.txt
+	rm -f EVs_real2_out.txt EVs_c_out.txt output*.txt
 
 
 clean: cleanobj cleanexe cleantests cleanoutput
