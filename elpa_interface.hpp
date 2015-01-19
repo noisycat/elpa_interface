@@ -89,9 +89,9 @@ template<typename T> class ELPA_Interface {
 			for(int i = 0; i < N; i++) {
 				for(int j = 0; j < M; j++) {
 					this->a[M*i+j] = (A[i])[j];
-					std::cout << ' ' << std::setw(3) << (A[i])[j];
+					//std::cout << ' ' << std::setw(3) << (A[i])[j];
 				}
-				std::cout << std::endl;
+				//std::cout << std::endl;
 			}
 		};
 		int setSolve(MPI_Comm * mpi_comm_rows, MPI_Comm * mpi_comm_cols,MPI_Comm * the_comm){
@@ -133,12 +133,6 @@ template<typename T> class ELPA_Interface {
 			eigvecs_rows = 0;
 			eigvecs_cols = 0;
 			MPI_Fint the_comm_f = MPI_Comm_c2f(*the_comm);
-
-#ifdef DEBUG
-			double* B = (double*) calloc(20,sizeof(double));
-			int N = 20;
-			plus_(this->a.data(), &N, this->a.data());
-#endif
 
 #ifdef DEBUG
 			//solve_provided_(&the_comm_f, &data, &this->N, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);

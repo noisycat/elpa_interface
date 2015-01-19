@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 	int mpierr = 0;
 	mpierr = MPI_Init_thread(&argc,&argv,required,&provided);
 	/* get N, M values from commandline for tests */
-	int N = 20;
+	int N = 8000;
 	int M = N;
 
 	/* MPI TASK value */

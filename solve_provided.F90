@@ -669,8 +669,7 @@ subroutine section_matrix(na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols, 
    allocate(col(na))
 
    do i=1,na
-      if(myid==0) col(1:i) = a_global(1:i,i)
-      call mpi_bcast(col,i,MPI_REAL8,0,op_comm,mpierr)
+      col(1:i) = a_global(1:i,i)
       if(l_col(i) > 0) then
          do j=1,i
             if(l_row(j)>0) a(l_row(j),l_col(i)) = col(j)

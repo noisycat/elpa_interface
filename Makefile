@@ -1,6 +1,6 @@
 CXX=mpic++
 FC=mpif90
-CXXFLAGS=-O0 -g -openmp -DDEBUG
+CXXFLAGS=-O0 -g -openmp -DDEBUG -DTEST4
 FCFLAGS=$(CXXFLAGS) 
 ELPA_LIB=-Wl,-rpath=/workspace/elpa/lib -L/workspace/elpa/lib -lelpa  -mkl=cluster
 ELPA_INC=-I/workspace/elpa/include/elpa-2014.06.001 -I/workspace/elpa/include/elpa-2014.06.001/modules -mod /workspace/elpa/include/elpa-2014.06.001/modules

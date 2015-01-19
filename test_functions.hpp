@@ -129,7 +129,7 @@ void Test_FillA_Set4(vector< vector< double > > &A, const int N, const int M, co
 	vector< vector<double> > Z;
 
 	// Init random num generator
-	srand( my_seed );
+	srand( 0 );
 
 	// give Z vectors for rows (I assume this is how Grady did his matrix)
 	
