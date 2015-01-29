@@ -3,6 +3,7 @@
 #include "mycomplex.h"
 #include "mpi.h"
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <omp.h>
 #include <math.h>
@@ -67,6 +68,7 @@ template<typename T> class ELPA_Interface {
 		ELPA_Interface() {
 			this->sc_desc.resize(9);
 		};
+		T* data() { return this->a.data(); }
 		// Associate - transfer matrix
 		void Associate(vector< vector<T> > &A, int nblk = 16) 
 		{ 
@@ -120,6 +122,35 @@ template<typename T> class ELPA_Interface {
 		// Regather
 		void Gather() {};
 
+		// New interface
+		void Solve(double* A, int N_, MPI_Comm* the_comm, double* eigvals_) {
+			// on entrance, A is the input matrix. On exit, it is all the eigenvectors.
+			double *eigvecs, *eigvals;
+			int     eigvecs_rows,  eigvecs_cols;
+			int N = N_;
+			eigvecs = NULL;
+ 			eigvals = NULL;
+			eigvecs_rows = 0;
+			eigvecs_cols = 0;
+			MPI_Fint the_comm_f = MPI_Comm_c2f(*the_comm);
+			solve_full_(&the_comm_f, A, &N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
+			//solve_no_allocations_(&the_comm_f, A, &N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
+			//clear A, and then copy eigenvectors into it:
+			memset(A,0.0,sizeof(double)*N*N);
+/*
+			for(int i = 0; i < eigvecs_rows; i++) {
+				for(int j = 0; j < eigvecs_cols; j++) {
+					A[i*eigvecs_cols + j] = eigvecs[i+eigvecs_rows * j];
+				}
+			}
+*/
+			for(int i = 0; i < eigvecs_rows; i++) {
+				eigvals_[i] = eigvals[i];
+			}
+			// need to either free the fortran array or rewrite it to not need a fortran array (latter is probably easier)
+			//free_fortran(eigvals);
+		};
+
 		// Solve from start to finish
 		void Solve2(vector< vector<T> > &A, MPI_Comm* the_comm, int myid, int nprocs, int required_mpi_thread_level, int provided_mpi_thread_level) {
 
@@ -150,18 +181,7 @@ template<typename T> class ELPA_Interface {
 			FILE* debug = fopen("EVs_c_out.txt","w");
 			for(int i = 0; i < eigvecs_cols; i++) { fprintf(debug,"%d %lf\n",i,eigvals[i]); }
 		};
-		void Solve(vector< vector<T> > &A, MPI_Comm* the_comm, int myid, int nprocs, int required_mpi_thread_level, int provided_mpi_thread_level) {
-
-			if(myid==0) this->Associate(A);
-
-			double *data = this->a.data();
-			double *eigvecs, *eigvals;
-			int     eigvecs_rows,  eigvecs_cols;
-			MPI_Fint the_comm_f = MPI_Comm_c2f(*the_comm);
-
-			solve_provided_(&the_comm_f, &data, &this->N, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
-		};
-		double Residual(){
+		double Residual(int myid, double err){
 			vector<T> tmp1;
 			tmp1.resize(this->na);
 			// tmp1 =  A * Z
@@ -181,24 +201,24 @@ template<typename T> class ELPA_Interface {
 			for(int i = 0; i < na; i++) tmp1.data()[i] = tmp1.data()[i] - tmp2.data()[i];
 
 			// Get maximum norm of columns of tmp1
-			errmax = 0.0;
+			double errmax = 0.0;
 			for(int i=0; i < nev; i++){
 				err = 0.0;
 				//pdnrm2(na,err,tmp1,1,i,sc_desc,1);
-				errmax = max<double>(errmax, err);
+				errmax = std::max<double>(errmax, err);
 			}
 
 			// Get maximum error norm over all processors
 			err = errmax;
-			mpierr = MPI_Allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD);
+			int mpierr = MPI_Allreduce(&err,&errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD);
 			if(myid==0) std::cout << std::endl;
 			if(myid==0) std::cout << "Error Residual     :" << errmax << std::endl;
 
-			if (errmax > 5e-12) {
-				status = 1;
-			}
+			return err;
 		}
-		double EigenOrth(){
+		double EigenOrth(vector<T> tmp, double* z, double & err, int myid){
+			int mpierr;
+			double errmax = 0.0;
 			vector<T> tmp1;
 			vector<T> tmp2;
 			tmp1.resize(this->na);
@@ -218,11 +238,11 @@ template<typename T> class ELPA_Interface {
 
 			// Get maximum error (max abs value in tmp1)
 			err = maxval(abs(tmp1));
-			call mpi_allreduce(err,errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD,mpierr);
+			mpierr = MPI_Allreduce(&err,&errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD);
 			if(myid==0) std::cout << "Error Orthogonality:" << errmax << std::endl;
 
 			if (errmax > 5e-12) {
-				status = 1;
+				int status = 1;
 			}
 		};
 		// Destructor - ELPA_Interface object goes byebye

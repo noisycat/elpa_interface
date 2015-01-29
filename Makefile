@@ -1,9 +1,21 @@
-CXX=mpic++
-FC=mpif90
-CXXFLAGS=-O0 -g -openmp -DDEBUG -DTEST4
+##############################
+################ cray - edison
+CXX=CC
+FC=ftn
+#CXXFLAGS=-O0 -g -fopenmp -DDEBUG -DTEST4
+CXXFLAGS=-O3 -g -fopenmp -DTEST4
 FCFLAGS=$(CXXFLAGS) 
-ELPA_LIB=-Wl,-rpath=/workspace/elpa/lib -L/workspace/elpa/lib -lelpa  -mkl=cluster
-ELPA_INC=-I/workspace/elpa/include/elpa-2014.06.001 -I/workspace/elpa/include/elpa-2014.06.001/modules -mod /workspace/elpa/include/elpa-2014.06.001/modules
+ELPA_LIB=-Wl,-rpath=$(HOME)/gcc/elpa/lib -L$(HOME)/gcc/elpa/lib -lelpa_openmp
+ELPA_INC=-I$(HOME)/elpa-2014.06.001 -I$(HOME)/elpa-2014.06.001/modules -J$(HOME)/elpa-2014.06.001/modules
+##############################
+##############################
+################ workstations
+#CXX=mpic++
+#FC=mpif90
+#CXXFLAGS=-O0 -g -openmp -DDEBUG -DTEST4
+#FCFLAGS=$(CXXFLAGS) 
+#ELPA_LIB=-Wl,-rpath=/workspace/elpa/lib -L/workspace/elpa/lib -lelpa  -mkl=cluster
+#ELPA_INC=-I/workspace/elpa/include/elpa-2014.06.001 -I/workspace/elpa/include/elpa-2014.06.001/modules -mod /workspace/elpa/include/elpa-2014.06.001/modules
 # main target
 all : main tests
 
@@ -38,8 +50,11 @@ main.o : main.cpp elpa_interface.hpp test_functions.hpp
 numroc_fortran_test: numroc_fortran_test.o
 	$(FC) $(FCFLAGS) $^ -o $@ $(ELPA_LIB)
 
+test_hybrid : test.cpp
+	$(CXX) $(CXXFLAGS) $< -o $@ $(ELPA_INC) $(ELPA_LIB)
+
 test_real2 : test_real2.F90
 	$(FC) $(FCFLAGS) $< -o $@ $(ELPA_INC) $(ELPA_LIB)
 
-tests: numroc_fortran_test test_real2
+tests: numroc_fortran_test test_hybrid 
 

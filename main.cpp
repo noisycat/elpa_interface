@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 	int mpierr = 0;
 	mpierr = MPI_Init_thread(&argc,&argv,required,&provided);
 	/* get N, M values from commandline for tests */
-	int N = 8000;
+	int N = 300;
 	int M = N;
 
 	/* MPI TASK value */
@@ -55,9 +55,18 @@ int main(int argc, char* argv[])
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!
 	/* !!!! elpa.Solve(A) !!!!! */
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!
-	//elpa.Solve(A,&the_comm,myid,nprocs,required,provided);
-	elpa.Solve2(A,&the_comm,myid,nprocs,required,provided);
+	double* eigvals = new double[N];
+	elpa.Associate(A);
 
+	elpa.Solve(elpa.data(),N,&the_comm,eigvals);
+
+	if(myid==0) {
+		FILE* comparison = fopen("comparison.txt","w");
+		for(int i = 0; i < N; i++) fprintf(comparison,"%d %lf\n",i,eigvals[i]);
+		fclose(comparison);
+	}
+
+	delete [] eigvals;
 	MPI_Finalize();
 	return 0;
 }
