@@ -128,6 +128,7 @@ template<typename T> class ELPA_Interface {
 			double *eigvecs, *eigvals;
 			int     eigvecs_rows,  eigvecs_cols;
 			int N = N_;
+			int myid;
 			eigvecs = NULL;
  			eigvals = NULL;
 			eigvecs_rows = 0;
@@ -136,16 +137,18 @@ template<typename T> class ELPA_Interface {
 			solve_full_(&the_comm_f, A, &N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
 			//solve_no_allocations_(&the_comm_f, A, &N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
 			//clear A, and then copy eigenvectors into it:
-			memset(A,0.0,sizeof(double)*N*N);
-/*
-			for(int i = 0; i < eigvecs_rows; i++) {
-				for(int j = 0; j < eigvecs_cols; j++) {
-					A[i*eigvecs_cols + j] = eigvecs[i+eigvecs_rows * j];
+			MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+			if(myid==0) {
+				for(int i = 0; i < N; i++) {
+					for(int j = 0; j < N; j++) {
+						printf(" %e",A[i*N + j]);
+					}
+					printf("\n");
 				}
 			}
-*/
-			for(int i = 0; i < eigvecs_rows; i++) {
+			for(int i = 0; i < N; i++) {
 				eigvals_[i] = eigvals[i];
+				printf("%d %e\n",i,eigvals[i]);
 			}
 			// need to either free the fortran array or rewrite it to not need a fortran array (latter is probably easier)
 			//free_fortran(eigvals);
