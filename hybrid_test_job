@@ -1,0 +1,30 @@
+#!/bin/bash -l
+#PBS -q debug
+#PBS -l mppwidth=192
+#PBS -l walltime=00:30:00
+#PBS -N Si525
+#PBS -e $PBS_JOBID.err
+#PBS -o $PBS_JOBID.out
+#PBS -A m175
+#PBS -V
+
+cd $PBS_O_WORKDIR
+export MPICH_MAX_THREAD_SAFETY multiple
+export OMP_NUM_THREADS=1
+aprun -n 192 ./main > 192--.out
+rm *.txt
+export OMP_NUM_THREADS=1
+aprun -n 192 -N 24 ./main > 192-24-01.out
+rm *.txt
+export OMP_NUM_THREADS=2
+aprun -n 96 -N 12 -d 2 ./main > 096-12-02.out
+rm *.txt
+export OMP_NUM_THREADS=4
+aprun -n 48 -N 6 -d 4 ./main > 048-06-04.out
+rm *.txt
+export OMP_NUM_THREADS=12
+aprun -n 16 -N 2 -ss -d 12 ./main > 016-02-12.out
+rm *.txt
+export OMP_NUM_THREADS=24
+aprun -n 8 -N 1 -ss -d 24 ./main > 008-01-24.out
+rm *.txt
