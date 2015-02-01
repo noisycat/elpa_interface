@@ -29,7 +29,7 @@ cleanexe:
 	rm -f main
 
 cleantests:
-	rm -f numroc_fortran_test test_real2
+	rm -f numroc_fortran_test test_real2 test_hybrid
 
 cleanoutput:
 	rm -f EVs_real2_out.txt EVs_c_out.txt output*.txt

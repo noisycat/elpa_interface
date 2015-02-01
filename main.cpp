@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 	int mpierr = 0;
 	mpierr = MPI_Init_thread(&argc,&argv,required,&provided);
 	/* get N, M values from commandline for tests */
-	int N = 300;
+	int N = 34;
 	int M = N;
 
 	/* MPI TASK value */
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
 
 	if(myid==0) {
 		FILE* comparison = fopen("comparison.txt","w");
-		for(int i = 0; i < N; i++) fprintf(comparison,"%d %lf\n",i,eigvals[i]);
+		for(int i = 0; i < N; i++) fprintf(comparison,"%d %e\n",i,eigvals[i]);
 		fclose(comparison);
 	}
 
