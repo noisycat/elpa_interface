@@ -330,8 +330,8 @@ z_ptr_c, na_rows_out, na_cols_out, ev_ptr_c)
    !-------------------------------------------------------------------------------
    ! Test correctness of result (using plain scalapack routines)
 #if 1
-   call gather_matrix(na, z, na_rows, nblk, my_prow, my_pcol, np_rows, &
-   np_cols, op_comm, input_matrix)
+   call gather_matrix(na, z, na_rows, na_cols, nblk, my_prow, my_pcol, np_rows, &
+   np_cols, op_comm, my_blacs_ctxt, input_matrix)
    if (myid==0) then
      print '(a)','| input matrix has been rewritten.'
    end if
@@ -633,19 +633,22 @@ subroutine solve_provided(op_comm, input_matrix, N, M, z_ptr_c, &
 
 end subroutine solve_provided
 !-----------------------------------------------------------------------
-subroutine gather_matrix(na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols, op_comm, a_global)
+subroutine gather_matrix(na, a, lda, na_cols, nblk, my_prow, my_pcol, np_rows, np_cols, op_comm, ctxt, a_global)
 
    implicit none
    include 'mpif.h'
 
-   integer, intent(in) :: na, lda, nblk, my_prow, my_pcol, np_rows, np_cols, op_comm
-   real*8, intent(in) :: a(lda, *)
+   integer, intent(in) :: na, lda, na_cols, nblk, my_prow, my_pcol, np_rows, np_cols, op_comm, ctxt
+   real*8, intent(in) :: a(lda, na_cols)
    real*8, intent(out) :: a_global(na,na)
 
    integer i, j, lr, lc, myid, mpierr
    integer, allocatable :: l_row(:), l_col(:)
 
    real*8, allocatable :: col(:)
+#if defined(PRINT_GATHER_DEBUG)
+   character*16 :: filename
+#endif
 
    ! allocate and set index arrays
 
@@ -680,20 +683,30 @@ subroutine gather_matrix(na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols, o
    enddo
 
    allocate(col(na))
+   a_global(:,:) = 0
 
    do i=1,na
       if(l_col(i) > 0) then
          do j=1,i
-            if(l_row(j)>0) col(j) = a(l_row(j),l_col(i))
+            if(l_row(j)>0) a_global(j,i) = a(l_row(j),l_col(i))
          enddo
       endif
       if(l_row(i) > 0) then
          do j=1,i-1
-            if(l_col(j)>0) col(j) = a(l_row(i),l_col(j))
+            if(l_col(j)>0) a_global(i,j) = a(l_row(i),l_col(j))
          enddo
       endif
-      a_global(1:i,i) = col(1:i)
    enddo
+
+#if defined(PRINT_GATHER_DEBUG)
+   write(filename,"(A6,I3.3,A4)") "gather",myid,".txt"
+   open(12,file=filename,status="unknown")
+   write(12,"(34E26.13E2)") (a_global(i,:),i=1,na)
+   close(12)
+#endif
+
+   ! global reduction that stitches together the a_global
+   call DGSUM2D(ctxt,'A',' ',na,na,a_global,na,-1,-1,-1)
 
    deallocate(l_row, l_col, col)
 
@@ -713,6 +726,10 @@ subroutine section_matrix(na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols, 
    integer, allocatable :: l_row(:), l_col(:)
 
    real*8, allocatable :: col(:)
+
+#if defined(PRINT_SECTION_DEBUG)
+   character*16 :: filename
+#endif
 
    ! allocate and set index arrays
 
@@ -760,6 +777,13 @@ subroutine section_matrix(na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols, 
       endif
    enddo
 
+#if defined(PRINT_SECTION_DEBUG)
+   write(filename,"(A6,I3.3,A4)") "sectio",myid,".txt"
+   open(12,file=filename,status="unknown")
+   write(12,"(34E26.13E2)") (a_global(i,:),i=1,34)
+   close(12)
+#endif
+
    deallocate(l_row, l_col, col)
 
 end subroutine section_matrix
@@ -777,6 +801,7 @@ subroutine bcast_matrix(na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols, op
    integer, allocatable :: l_row(:), l_col(:)
 
    real*8, allocatable :: col(:)
+   character*16 :: filename
 
    ! allocate and set index arrays
 
@@ -824,7 +849,6 @@ subroutine bcast_matrix(na, a, lda, nblk, my_prow, my_pcol, np_rows, np_cols, op
          enddo
       endif
    enddo
-
    deallocate(l_row, l_col, col)
 
 end subroutine bcast_matrix
