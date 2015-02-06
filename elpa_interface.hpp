@@ -34,8 +34,7 @@ extern "C" {
 	int numroc_(int, int, int, int);
 
 	//
-	void solve_provided_(MPI_Fint * op_comm, double** input_matrix, int* N, int* M, double** z, int *z_rows, int *z_cols, double ** ev);
-	void solve_full_(MPI_Fint *, double *, int* , double **, int *, int * , double **);
+	void solve_full_(MPI_Fint *, double *, int* , double *, int*);
 }
 
 using std::vector;
@@ -123,7 +122,7 @@ template<typename T> class ELPA_Interface {
 		void Gather() {};
 
 		// New interface
-		void Solve(double* A, int N_, MPI_Comm* the_comm, double* eigvals_) {
+		void Solve(double* A, int N_, MPI_Comm* the_comm, double* eigvals_, int nblk = 16) {
 			// on entrance, A is the input matrix. On exit, it is all the eigenvectors.
 			double *eigvecs, *eigvals;
 			int     eigvecs_rows,  eigvecs_cols;
@@ -134,9 +133,9 @@ template<typename T> class ELPA_Interface {
 			eigvecs_rows = 0;
 			eigvecs_cols = 0;
 			MPI_Fint the_comm_f = MPI_Comm_c2f(*the_comm);
-			solve_full_(&the_comm_f, A, &N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
+			solve_full_(&the_comm_f, A, &N, eigvals_, &nblk);
 			//solve_no_allocations_(&the_comm_f, A, &N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
-			//clear A, and then copy eigenvectors into it:
+#if defined(SOLVE_PRINT_EXPLODE)
 			MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 			if(myid==0) {
 				for(int i = 0; i < N; i++) {
@@ -147,9 +146,9 @@ template<typename T> class ELPA_Interface {
 				}
 			}
 			for(int i = 0; i < N; i++) {
-				eigvals_[i] = eigvals[i];
-				printf("%d %e\n",i,eigvals[i]);
+				printf("%d %e\n",i,eigvals_[i]);
 			}
+#endif
 			// need to either free the fortran array or rewrite it to not need a fortran array (latter is probably easier)
 			//free_fortran(eigvals);
 		};

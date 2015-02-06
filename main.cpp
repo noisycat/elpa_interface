@@ -14,7 +14,12 @@ int main(int argc, char* argv[])
 	int mpierr = 0;
 	mpierr = MPI_Init_thread(&argc,&argv,required,&provided);
 	/* get N, M values from commandline for tests */
-	int N = 34;
+	int N;
+	if(argc < 2) {
+		N = 15000;
+	} else {
+		N = atoi(argv[1]);
+	}
 	int M = N;
 
 	/* MPI TASK value */
