@@ -3,9 +3,9 @@
 CXX=CC
 FC=ftn
 #CXXFLAGS=-O0 -g -fopenmp -DDEBUG -DTEST4
-CXXFLAGS=-O3 -g -fopenmp -DTEST4 -DLOCKING_TIMING -DPRINT_GATHER_DEBUG
+CXXFLAGS=-O3 -g -fopenmp -DTEST4 -DLOCKING_TIMING 
 FCFLAGS=$(CXXFLAGS) 
-ELPA_LIB=-Wl,-rpath=$(HOME)/gcc/elpa/lib -L$(HOME)/gcc/elpa/lib -lelpa_openmp $(IPM_GNU)
+ELPA_LIB=-Wl,-rpath=$(HOME)/gcc/elpa/lib -L$(HOME)/gcc/elpa/lib -lelpa_openmp # $(IPM_GNU)
 ELPA_INC=-I$(HOME)/elpa-2014.06.001 -I$(HOME)/elpa-2014.06.001/modules -J$(HOME)/elpa-2014.06.001/modules
 ##############################
 ##############################
@@ -19,6 +19,9 @@ ELPA_INC=-I$(HOME)/elpa-2014.06.001 -I$(HOME)/elpa-2014.06.001/modules -J$(HOME)
 # main target
 all : main tests
 
+debug: 
+	$(MAKE) all CXXFLAGS="$(CXXFLAGS) -DPRINT_GATHER_DEBUG -DPRINT_GATHER_DEBUG_N=34"
+
 main : main.o  solve_provided.o test_input.o
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(ELPA_LIB)
 
@@ -29,10 +32,10 @@ cleanexe:
 	rm -f main
 
 cleantests:
-	rm -f numroc_fortran_test test_real2 test_hybrid
+	rm -f numroc_fortran_test test_real2 test_hybrid 
 
 cleanoutput:
-	rm -f EVs_real2_out.txt EVs_c_out.txt output*.txt
+	rm -f EVs_real2_out.txt EVs_c_out.txt output*.txt *.out *.txt
 
 
 clean: cleanobj cleanexe cleantests cleanoutput
