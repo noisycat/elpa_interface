@@ -11,6 +11,8 @@ gather_n2_f = [ open('gather%03d_n2.txt' % (i),'r') for i in range(2) ]
 gather_n4_f = [ open('gather%03d_n4.txt' % (i),'r') for i in range(4) ]
 gather_A_n2 = [np.genfromtxt(n2) for n2 in gather_n2_f]
 gather_A_n4 = [np.genfromtxt(n4) for n4 in gather_n4_f]
+gather_n2 = [gather_A_baseline - n2 for n2 in gather_A_n2]
+gather_n4 = [gather_A_baseline - n4 for n4 in gather_A_n4]
 gather_res_n2 = min(norm(gather_A_baseline - sum(gather_A_n2)),norm(gather_A_baseline + sum(gather_A_n2)))
 gather_res_n4 = min(norm(gather_A_baseline - sum(gather_A_n4)),norm(gather_A_baseline + sum(gather_A_n4)))
 

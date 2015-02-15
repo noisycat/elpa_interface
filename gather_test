@@ -2,23 +2,25 @@
 #PBS -q debug
 #PBS -l mppwidth=96
 #PBS -l walltime=00:30:00
-#PBS -N Si525
-#PBS -oe $PBS_JOBID..out
+#PBS -N gather_test
+#PBS -o $PBS_JOBID.out
+#PBS -j oe
 #PBS -A m175
 #PBS -V
 
-cd $PBS_O_WORKDIR
+#cd $PBS_O_WORKDIR
 export MPICH_MAX_THREAD_SAFETY multiple
 export OMP_NUM_THREADS=12
 rm -f gather*.txt collec*.txt baseline
-aprun -n 1 -N 1 -cc none -d 12 ./main 34 > n1.out
+aprun -n 1 -N 1 -cc none -d 12 ./main 34 
 mv gather000.txt gather_baseline
 mv collec000.txt collec_baseline
-aprun -n 2 -N 1 -cc none -d 12 ./main 34 > n2.out
+aprun -n 2 -N 1 -cc none -d 12 ./main 34
 for file in `ls {gather,collec}[0-9][0-9][0-9].txt`; do
 	echo $file | sed -r -e "s/(\S+).txt/\1_n2.txt/g" | xargs -n 1 mv $file
 done
-aprun -n 4 -N 1 -cc none -d 12 ./main 34 > n4.out
+aprun -n 4 -N 1 -cc none -d 12 ./main 34
 for file in `ls {gather,collec}[0-9][0-9][0-9].txt`; do
 	echo $file | sed -r -e "s/(\S+).txt/\1_n4.txt/g" | xargs -n 1 mv $file 
 done
+./orthog_test.py
