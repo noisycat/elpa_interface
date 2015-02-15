@@ -123,7 +123,7 @@ template<typename T> class ELPA_Interface {
 
 		// New interface
 		void Solve(double* A, int N_, MPI_Comm* the_comm, double* eigvals_, int nblk = 16) {
-			// on entrance, A is the input matrix. On exit, it is all the eigenvectors.
+			fprintf(stderr,"on entrance, A is the input matrix. On exit, it is all the eigenvectors.\n");
 			double *eigvecs, *eigvals;
 			int     eigvecs_rows,  eigvecs_cols;
 			int N = N_;
@@ -133,8 +133,9 @@ template<typename T> class ELPA_Interface {
 			eigvecs_rows = 0;
 			eigvecs_cols = 0;
 			MPI_Fint the_comm_f = MPI_Comm_c2f(*the_comm);
+			//fprintf(stderr,"%d %p %d %p %d\n", the_comm_f, A, N, eigvals_, nblk );
 			solve_full_(&the_comm_f, A, &N, eigvals_, &nblk);
-			//solve_no_allocations_(&the_comm_f, A, &N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
+			//fprintf(stderr,"On exit, it is all the eigenvectors.\n");
 #if defined(SOLVE_PRINT_EXPLODE)
 			MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 			if(myid==0) {
@@ -149,8 +150,6 @@ template<typename T> class ELPA_Interface {
 				printf("%d %e\n",i,eigvals_[i]);
 			}
 #endif
-			// need to either free the fortran array or rewrite it to not need a fortran array (latter is probably easier)
-			//free_fortran(eigvals);
 		};
 
 		// Solve from start to finish

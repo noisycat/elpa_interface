@@ -392,6 +392,7 @@ subroutine gather_matrix(na, a, lda, na_cols, nblk, my_prow, my_pcol, np_rows, n
    real*8, intent(out) :: a_global(na,na)
 
    integer i, j, lr, lc, myid, mpierr
+   integer steps, starti, endi
    integer, allocatable :: l_row(:), l_col(:)
 #if defined(PRINT_GATHER_DEBUG)
    character*16 :: filename
@@ -455,17 +456,31 @@ subroutine gather_matrix(na, a, lda, na_cols, nblk, my_prow, my_pcol, np_rows, n
    close(12)
 #endif
 
-#if 1
+#if 0
    ! global reduction that stitches together the a_global
    ! Doesn't work for large enough matrices (na >> 15k on edison) because of 
    ! limitations on BLACS buffer space
    call DGSUM2D(ctxt,'A',' ',na,na,a_global,na,-1,-1,-1)
+#elif 1
+   steps = 2
+   do i=1,steps
+      starti = (i-1)*(na/steps)+1
+      endi = i*(na/steps)
+      if(myid==0) write(*,*) i,starti,endi
+      call DGSUM2D(ctxt,'A',' ',na,endi-starti+1,a_global(:,starti:endi),na,-1,-1,-1)
+   enddo
+   if (.not. (endi == na)) then
+      starti=endi+1
+      endi=na
+      if(myid==0) write(*,*) i,starti,endi
+      call DGSUM2D(ctxt,'A',' ',na,endi-starti+1,a_global(:,starti:endi),na,-1,-1,-1)
+   endif
 #endif
 
 #if defined(PRINT_GATHER_DEBUG)
    write(filename,"(A6,I3.3,A4)") "collect",myid,".txt"
    open(12,file=filename,status="unknown")
-   write(12,"(34E26.13E2)") (a_global(i,:),i=1,34)
+   write(12,"(34E26.13E2)") (a_global(i,:),i=1,PRINT_GATHER_DEBUG_N)
    close(12)
 #endif
 
