@@ -462,7 +462,7 @@ subroutine gather_matrix(na, a, lda, na_cols, nblk, my_prow, my_pcol, np_rows, n
    ! limitations on BLACS buffer space
    call DGSUM2D(ctxt,'A',' ',na,na,a_global,na,-1,-1,-1)
 #elif 1
-   steps = 2
+   steps = 8
    do i=1,steps
       starti = (i-1)*(na/steps)+1
       endi = i*(na/steps)
