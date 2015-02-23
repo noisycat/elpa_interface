@@ -1,7 +1,7 @@
-#!/bin/bash -l
+#!/bin/bash
 #PBS -q debug
 #PBS -l mppwidth=48
-#PBS -l walltime=00:01:00
+#PBS -l walltime=00:30:00
 #PBS -N Si525
 #PBS -e $PBS_JOBID.err
 #PBS -o $PBS_JOBID.out
@@ -10,5 +10,5 @@
 
 cd $PBS_O_WORKDIR
 export MPICH_MAX_THREAD_SAFETY multiple
-export OMP_NUM_THREADS=12
-aprun -n 4 -N 2 -ss -d 12 ./main > 008-01-24.out
+export OMP_NUM_THREADS=24
+aprun -n 4 -N 2 -ss -d 12 valgrind --leak-check=yes ./main 8000

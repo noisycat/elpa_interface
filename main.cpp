@@ -60,10 +60,10 @@ int main(int argc, char* argv[])
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!
 	/* !!!! elpa.Solve(A) !!!!! */
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!
+	double* a = new double[N*N];
 	double* eigvals = new double[N];
-	elpa.Associate(A);
-
-	elpa.Solve(elpa.data(),N,&the_comm,eigvals);
+	elpa.Associate(A,a);
+	elpa.Solve(a,N,&the_comm,eigvals);
 
 	if(myid==0) {
 		FILE* comparison = fopen("comparison.txt","w");
@@ -71,6 +71,7 @@ int main(int argc, char* argv[])
 		fclose(comparison);
 	}
 
+	delete [] a;
 	delete [] eigvals;
 	MPI_Finalize();
 	return 0;

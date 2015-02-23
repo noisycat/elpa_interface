@@ -61,7 +61,12 @@ subroutine solve_full(op_comm, input_matrix, N, ev_ptr_c, nblk)
    integer, external :: numroc
 
    real*8 err, errmax
-   real*8, allocatable :: a(:,:), tmp1(:,:), tmp2(:,:), as(:,:)
+   real*8, allocatable :: a(:,:)
+
+#if defined(ELPA_INTERNAL_DEBUG)
+   real*8, allocatable :: tmp1(:,:), tmp2(:,:), as(:,:)
+#endif
+
    real*8, allocatable, target :: z(:,:), ev(:)
 
    integer :: iseed(4096) ! Random seed, size should be sufficient for every generator
@@ -211,7 +216,10 @@ subroutine solve_full(op_comm, input_matrix, N, ev_ptr_c, nblk)
 
    allocate(a (na_rows,na_cols))
    allocate(z (na_rows,na_cols))
+
+#if defined(ELPA_INTERNAL_DEBUG)
    allocate(as(na_rows,na_cols))
+#endif
 
    allocate(ev(na))
 
@@ -256,7 +264,9 @@ subroutine solve_full(op_comm, input_matrix, N, ev_ptr_c, nblk)
 #endif
    ! Save original matrix A for later accuracy checks
 
+#if defined(ELPA_INTERNAL_DEBUG)
    as = a
+#endif
 
    ! set print flag in elpa1
    elpa_print_times = .true.
@@ -308,9 +318,8 @@ subroutine solve_full(op_comm, input_matrix, N, ev_ptr_c, nblk)
    if (myid==0) then
      print '(a)','| input matrix has been rewritten.'
    end if
-#if 0
+#if defined(ELPA_INTERNAL_DEBUG)
 
-   deallocate(a)
    call BLACS_Gridinit( my_blacs_ctxt, 'C', 1, 1)
    allocate(tmp1(na_rows,na_cols))
 
@@ -376,6 +385,7 @@ subroutine solve_full(op_comm, input_matrix, N, ev_ptr_c, nblk)
    deallocate(tmp2)
 #endif
    ev_ptr_c(:) = ev(:)
+   deallocate(a)
    deallocate(z)
    deallocate(ev)
    call blacs_gridexit(my_blacs_ctxt)

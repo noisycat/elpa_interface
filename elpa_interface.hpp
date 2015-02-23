@@ -47,29 +47,15 @@ template<typename T> class ELPA_Interface {
 	 * - Call the solver for ELPA1 or ELPA2
 	 */
 	private:
-		int np_rows, np_cols; 
  		int N, M; // actual matrix dimension
-		int na_rows, na_cols; // local subsection of matrix dimension
 		int nblk; // nblk: Blocking factor in block cyclic distribution
 		int na; // na: size of system
 		int nev; // nev: number of eigenvalues to calculate
-		int nprow;
-		int npcol;
-		MPI_Comm the_comm; // The comm used for this entire operation
-		vector<T> a; // where we coalesce a vector< vector< T > > before passing it to its doom (overwritten during routine)
-		vector<T> as; // store original a for checking against later - can remove this
-		vector<T> ev; // where we store the answered eigenvectors
-		vector<T> ew; // where we store the answered eigenvalues
-		vector<int> sc_desc; //scalapack descriptor?
-
 	public:
 		// Constructor 
-		ELPA_Interface() {
-			this->sc_desc.resize(9);
-		};
-		T* data() { return this->a.data(); }
+		ELPA_Interface() { };
 		// Associate - transfer matrix
-		void Associate(vector< vector<T> > &A, int nblk = 16) 
+		void Associate(vector< vector<T> > &A, double* a, int nblk = 16) 
 		{ 
 			this->N = A.size();
 			this->M = A[0].size();
@@ -85,16 +71,37 @@ template<typename T> class ELPA_Interface {
 			this->na = this->N;
 			this->nev = this->N;
 
-			this->a.empty(); // shouldn't be necessary, but we're gonna be safe
-			this->a.resize(this->N * this->N);
 			for(int i = 0; i < N; i++) {
 				for(int j = 0; j < M; j++) {
-					this->a[M*i+j] = (A[i])[j];
-					//std::cout << ' ' << std::setw(3) << (A[i])[j];
+					a[M*i+j] = (A[i])[j];
 				}
-				//std::cout << std::endl;
 			}
 		};
+		// New interface
+		void Solve(double* A, int N_, MPI_Comm* the_comm, double* eigvals_, int nblk = 16) {
+			int N = N_;
+			int myid;
+			MPI_Fint the_comm_f = MPI_Comm_c2f(*the_comm);
+			//fprintf(stderr,"%d %p %d %p %d\n", the_comm_f, A, N, eigvals_, nblk );
+			solve_full_(&the_comm_f, A, &N, eigvals_, &nblk);
+#if defined(SOLVE_PRINT_EXPLODE)
+			MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+			if(myid==0) {
+				for(int i = 0; i < N; i++) {
+					for(int j = 0; j < N; j++) {
+						printf(" %e",A[i*N + j]);
+					}
+					printf("\n");
+				}
+			}
+			for(int i = 0; i < N; i++) {
+				printf("%d %e\n",i,eigvals_[i]);
+			}
+#endif
+		};
+		// Destructor - ELPA_Interface object goes byebye
+		~ELPA_Interface() {  };
+#if defined(INTERFACE_UNNECSSARY_CRUFT)
 		int setSolve(MPI_Comm * mpi_comm_rows, MPI_Comm * mpi_comm_cols,MPI_Comm * the_comm){
 			this->ew.resize(na);
 			int success = solve_evp_real_2stage_(this->na, this->nev, this->a.data(), this->na_rows, this->ev.data(), this->ew.data(), this->na_rows, this->nblk, this->mpi_comm_rows, this->mpi_comm_cols, this->the_comm);
@@ -121,132 +128,10 @@ template<typename T> class ELPA_Interface {
 		// Regather
 		void Gather() {};
 
-		// New interface
-		void Solve(double* A, int N_, MPI_Comm* the_comm, double* eigvals_, int nblk = 16) {
-			fprintf(stderr,"on entrance, A is the input matrix. On exit, it is all the eigenvectors.\n");
-			double *eigvecs, *eigvals;
-			int     eigvecs_rows,  eigvecs_cols;
-			int N = N_;
-			int myid;
-			eigvecs = NULL;
- 			eigvals = NULL;
-			eigvecs_rows = 0;
-			eigvecs_cols = 0;
-			MPI_Fint the_comm_f = MPI_Comm_c2f(*the_comm);
-			//fprintf(stderr,"%d %p %d %p %d\n", the_comm_f, A, N, eigvals_, nblk );
-			solve_full_(&the_comm_f, A, &N, eigvals_, &nblk);
-			//fprintf(stderr,"On exit, it is all the eigenvectors.\n");
-#if defined(SOLVE_PRINT_EXPLODE)
-			MPI_Comm_rank(MPI_COMM_WORLD,&myid);
-			if(myid==0) {
-				for(int i = 0; i < N; i++) {
-					for(int j = 0; j < N; j++) {
-						printf(" %e",A[i*N + j]);
-					}
-					printf("\n");
-				}
-			}
-			for(int i = 0; i < N; i++) {
-				printf("%d %e\n",i,eigvals_[i]);
-			}
-#endif
-		};
-
 		// Solve from start to finish
-		void Solve2(vector< vector<T> > &A, MPI_Comm* the_comm, int myid, int nprocs, int required_mpi_thread_level, int provided_mpi_thread_level) {
-
-			this->Associate(A);
-
-			double *data = this->a.data();
-			double *eigvecs, *eigvals;
-			int     eigvecs_rows,  eigvecs_cols;
-			eigvecs = NULL;
- 			eigvals = NULL;
-			eigvecs_rows = 0;
-			eigvecs_cols = 0;
-			MPI_Fint the_comm_f = MPI_Comm_c2f(*the_comm);
-
-#ifdef DEBUG
-			//solve_provided_(&the_comm_f, &data, &this->N, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
-			//solve_full_(&the_comm_f, &data, &this->N);
-			// all of these are input parameters
-			printf("%d %d %p %d %p %d %d %p\n", myid, the_comm_f, data, this->N, eigvecs, eigvecs_rows, eigvecs_cols, eigvals );
-			// Actual do the solve step
+		void Solve2(vector< vector<T> > &A, MPI_Comm* the_comm, int myid, int nprocs, int required_mpi_thread_level, int provided_mpi_thread_level){};
+		double Residual(int myid, double err){ };
+		double EigenOrth(vector<T> tmp, double* z, double & err, int myid){};
 #endif
-			solve_full_(&the_comm_f, data, &this->N, &eigvecs, &eigvecs_rows, &eigvecs_cols,  &eigvals);
-#ifdef DEBUG
-			// examine state change
-			printf("%d %d %p %d %p %d %d %p\n", myid, the_comm_f, data, this->N, eigvecs, eigvecs_rows, eigvecs_cols, eigvals );
-#endif
-			// print out eigenvalues in C++
-			FILE* debug = fopen("EVs_c_out.txt","w");
-			for(int i = 0; i < eigvecs_cols; i++) { fprintf(debug,"%d %lf\n",i,eigvals[i]); }
-		};
-		double Residual(int myid, double err){
-			vector<T> tmp1;
-			tmp1.resize(this->na);
-			// tmp1 =  A * Z
-			//call pdgemm('N','N',na,nev,na,1.d0,as,1,1,sc_desc, z,1,1,sc_desc,0.d0,tmp1,1,1,sc_desc);
-
-			//double* tmp2 = new double [na_rows * na_cols];
-			vector<T> tmp2;
-
-			// tmp2 = Zi*EVi
-			tmp2.assign(this->ew.begin(), this->ew.end());
-			for(int i=0; i < nev; i++){
-				//pdscal(this->na,this->ev(i),tmp2,1,i,sc_desc,1);
-			}
-
-			//  tmp1 = A*Zi - Zi*EVi
-			//tmp1(:,:) =  tmp1(:,:) - tmp2(:,:);
-			for(int i = 0; i < na; i++) tmp1.data()[i] = tmp1.data()[i] - tmp2.data()[i];
-
-			// Get maximum norm of columns of tmp1
-			double errmax = 0.0;
-			for(int i=0; i < nev; i++){
-				err = 0.0;
-				//pdnrm2(na,err,tmp1,1,i,sc_desc,1);
-				errmax = std::max<double>(errmax, err);
-			}
-
-			// Get maximum error norm over all processors
-			err = errmax;
-			int mpierr = MPI_Allreduce(&err,&errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD);
-			if(myid==0) std::cout << std::endl;
-			if(myid==0) std::cout << "Error Residual     :" << errmax << std::endl;
-
-			return err;
-		}
-		double EigenOrth(vector<T> tmp, double* z, double & err, int myid){
-			int mpierr;
-			double errmax = 0.0;
-			vector<T> tmp1;
-			vector<T> tmp2;
-			tmp1.resize(this->na);
-			// tmp1 = Z**T * Z
-			tmp1.assign(tmp.size(),0.0);
-			pdgemm('T','N',nev,nev,na,1.0,z,1,1,sc_desc, z,1,1,sc_desc,0.0,tmp1,1,1,sc_desc);
-
-
-			// tmp2 = Zi*EVi
-			tmp2.assign(this->ew.begin(), this->ew.end());
-			// Initialize tmp2 to unit matrix
-			tmp2.assign(tmp.size(),0.0);
-			pdlaset('A',nev,nev,0.0,1.0,tmp2,1,1,sc_desc);
-
-			// tmp1 = Z**T * Z - Unit Matrix
-			//tmp1(:,:) =  tmp1(:,:) - tmp2(:,:);
-
-			// Get maximum error (max abs value in tmp1)
-			err = maxval(abs(tmp1));
-			mpierr = MPI_Allreduce(&err,&errmax,1,MPI_REAL8,MPI_MAX,MPI_COMM_WORLD);
-			if(myid==0) std::cout << "Error Orthogonality:" << errmax << std::endl;
-
-			if (errmax > 5e-12) {
-				int status = 1;
-			}
-		};
-		// Destructor - ELPA_Interface object goes byebye
-		~ELPA_Interface() {  };
 };
 

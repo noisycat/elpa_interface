@@ -3,7 +3,7 @@
 CXX=CC
 FC=ftn
 #CXXFLAGS=-O0 -g -fopenmp -DDEBUG -DTEST4
-CXXFLAGS=-O3 -g -fopenmp -DTEST4 -DLOCKING_TIMING 
+CXXFLAGS=-O0 -g -fopenmp -DTEST4 -DLOCKING_TIMING 
 FCFLAGS=$(CXXFLAGS) 
 ELPA_LIB=-Wl,-rpath=$(HOME)/gcc/elpa/lib -L$(HOME)/gcc/elpa/lib -lelpa_openmp # $(IPM_GNU)
 ELPA_INC=-I$(HOME)/elpa-2014.06.001 -I$(HOME)/elpa-2014.06.001/modules -J$(HOME)/elpa-2014.06.001/modules
