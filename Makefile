@@ -3,10 +3,11 @@
 CXX=CC
 FC=ftn
 #CXXFLAGS=-O0 -g -fopenmp -DDEBUG -DTEST4
-CXXFLAGS=-O0 -g -fopenmp -DTEST4 -DLOCKING_TIMING 
+CXXFLAGS=-O0 -g -fopenmp -DTEST4 -DLOCKING_TIMING  -DWITH_MPI
 FCFLAGS=$(CXXFLAGS) 
-ELPA_LIB=-Wl,-rpath=$(HOME)/gcc/elpa/lib -L$(HOME)/gcc/elpa/lib -lelpa_openmp # $(IPM_GNU)
-ELPA_INC=-I$(HOME)/elpa-2014.06.001 -I$(HOME)/elpa-2014.06.001/modules -J$(HOME)/elpa-2014.06.001/modules
+ELPA_VERSION=-2016.05.003
+ELPA_LIB=-Wl,-rpath=$(HOME)/gcc/elpa-2016.05.003/lib -L$(HOME)/gcc/elpa-2016.05.003/lib -lelpa_openmp # $(IPM_GNU)
+ELPA_INC=$(HOME)/gcc/elpa-2016.05.003/include/elpa_openmp-2016.05.003/
 ##############################
 ##############################
 ################ workstations
@@ -42,10 +43,10 @@ clean: cleanobj cleanexe cleantests cleanoutput
 
 # implicit rules
 %.o : %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@ 
+	$(CXX) $(CXXFLAGS) -c $< -o $@ -I$(ELPA_INC)
 
 %.o : %.F90
-	$(FC) $(FCFLAGS) -c $< -o $@ $(ELPA_INC)
+	$(FC) $(FCFLAGS) -c $< -o $@ -I$(ELPA_INC) -I$(ELPA_INC)/modules
 
 # C++ has so many strange pitfalls. But we live and learn
 main.o : main.cpp elpa_interface.hpp test_functions.hpp 
@@ -54,10 +55,10 @@ numroc_fortran_test: numroc_fortran_test.o
 	$(FC) $(FCFLAGS) $^ -o $@ $(ELPA_LIB)
 
 test_hybrid : test.cpp
-	$(CXX) $(CXXFLAGS) $< -o $@ $(ELPA_INC) $(ELPA_LIB)
+	$(CXX) $(CXXFLAGS) $< -o $@ -I$(ELPA_INC) $(ELPA_LIB)
 
 test_real2 : test_real2.F90
-	$(FC) $(FCFLAGS) $< -o $@ $(ELPA_INC) $(ELPA_LIB)
+	$(FC) $(FCFLAGS) $< -o $@ -I$(ELPA_INC) $(ELPA_LIB)
 
 tests: numroc_fortran_test test_hybrid 
 

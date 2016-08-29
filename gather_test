@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #PBS -q debug
 #PBS -l mppwidth=96
-#PBS -l walltime=00:30:00
+#PBS -t walltime=00:30:00
 #PBS -N gather_test
 #PBS -o $PBS_JOBID.out
 #PBS -j oe
