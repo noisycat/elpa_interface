@@ -7,7 +7,7 @@ CXXFLAGS=-O0 -g -fopenmp -DTEST4 -DLOCKING_TIMING  -DWITH_MPI
 FCFLAGS=$(CXXFLAGS) 
 ELPA_VERSION=-2016.05.003
 ELPA_LIB=-Wl,-rpath=$(HOME)/gcc/elpa-2016.05.003/lib -L$(HOME)/gcc/elpa-2016.05.003/lib -lelpa_openmp # $(IPM_GNU)
-ELPA_INC=$(HOME)/gcc/elpa-2016.05.003/include/elpa_openmp-2016.05.003/
+ELPA_INC=$(HOME)/gcc/elpa-2016.05.003/include/elpa_openmp-2016.05.003
 ##############################
 ##############################
 ################ workstations
@@ -33,7 +33,7 @@ cleanexe:
 	rm -f main
 
 cleantests:
-	rm -f numroc_fortran_test test_real2 test_hybrid 
+	rm -f numroc_fortran_test test_real2 
 
 cleanoutput:
 	rm -f EVs_real2_out.txt EVs_c_out.txt output*.txt *.out *.txt
@@ -54,11 +54,8 @@ main.o : main.cpp elpa_interface.hpp test_functions.hpp
 numroc_fortran_test: numroc_fortran_test.o
 	$(FC) $(FCFLAGS) $^ -o $@ $(ELPA_LIB)
 
-test_hybrid : test.cpp
-	$(CXX) $(CXXFLAGS) $< -o $@ -I$(ELPA_INC) $(ELPA_LIB)
-
 test_real2 : test_real2.F90
 	$(FC) $(FCFLAGS) $< -o $@ -I$(ELPA_INC) $(ELPA_LIB)
 
-tests: numroc_fortran_test test_hybrid 
+tests: numroc_fortran_test 
 
