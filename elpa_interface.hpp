@@ -19,7 +19,21 @@
 extern "C" { void plus_(double * A, int * N, double* B); }
 #endif
 extern "C" {
-	#include <elpa/elpa.h>
+	/* raw copy and past from elpa header because of C99 / C++ disagreement over complex stypes in GNU */
+	int elpa_get_communicators(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
+	int get_elpa_communicators(int mpi_comm_world, int my_prow, int my_pcol, int *mpi_comm_rows, int *mpi_comm_cols);
+	int elpa_solve_evp_real_1stage(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
+	int elpa_solve_evp_complex_1stage(int na, int nev, double _Complex *a, int lda, double *ev, double _Complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols);
+	int elpa_solve_evp_real_2stage(int na, int nev, double *a, int lda, double *ev, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_REAL_ELPA_KERNEL_API, int useQR);
+	int elpa_solve_evp_complex_2stage(int na, int nev, double _Complex *a, int lda, double *ev, double _Complex *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int mpi_comm_all, int THIS_COMPLEX_ELPA_KERNEL_API);
+	int elpa_solve_tridi(int na, int nev, double *d, double *e, double *q, int ldq, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
+	int elpa_mult_at_b_real(char uplo_a, char uplo_c, int na, int ncb, double *a, int lda, double *b, int ldb, int nlbk, int mpi_comm_rows, int mpi_comm_cols, double *c, int ldc);
+	int elpa_mult_ah_b_complex(char uplo_a, char uplo_c, int na, int ncb, double _Complex *a, int lda, double _Complex *b, int ldb, int nblk, int mpi_comm_rows, int mpi_comm_cols, double _Complex *c, int ldc);
+	int elpa_invert_trm_real(int na, double *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
+	int elpa_invert_trm_complex(int na, double _Complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
+	int elpa_cholesky_real(int na, double *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
+	int elpa_cholesky_complex(int na, double _Complex *a, int lda, int nblk, int matrixCols, int mpi_comm_rows, int mpi_comm_cols, int wantDebug);
+
 
 	/* A reminder - all of these are the recorded FORTRAN interfaces that emulate Scalapack interfaces
 	   so name mangling exists and is a very real thing */
