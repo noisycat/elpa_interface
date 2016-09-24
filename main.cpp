@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
 	/* get N, M values from commandline for tests */
 	int N;
 	if(argc < 2) {
-		N = 15000;
+		N = 1000;
 	} else {
 		N = atoi(argv[1]);
 	}
@@ -62,15 +62,15 @@ int main(int argc, char* argv[])
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!
 	double* a = new double[N*N];
 	double* eigvals = new double[N];
-	elpa.Associate(A,a);
-	elpa.Solve(a,N,&the_comm,eigvals);
 
-	if(myid==0) {
-		FILE* comparison = fopen("comparison.txt","w");
-		for(int i = 0; i < N; i++) fprintf(comparison,"%d %e\n",i,eigvals[i]);
-		fclose(comparison);
-	}
-
+#ifdef UNIT_TESTS
+#ifdef UTT_SOLVE
+	elpa.Test_Solve(A,a,N,eigvals,N,the_comm);
+#endif
+#ifdef UTT_EIGENDECOMPORIGINAL
+	elpa.Test_EigenDecompOriginal(A,a,N,eigvals,N,the_comm);
+#endif
+#endif
 	delete [] a;
 	delete [] eigvals;
 	MPI_Finalize();
