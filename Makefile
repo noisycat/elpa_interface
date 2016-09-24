@@ -4,9 +4,10 @@ CC=mpiicc -cc=icc
 CXX=mpiicpc -cxx=icpc
 FC=mpiifort -f90=ifort
 #CXXFLAGS=-O0 -g -fopenmp -DDEBUG -DTEST4
-CXXFLAGS=-O0 -g -fopenmp -DTEST4 -DLOCKING_TIMING  -DWITH_MPI
-CFLAGS=$(CXXFLAGS) 
-FCFLAGS=$(CXXFLAGS) 
+FLAGS=-O0 -g -fopenmp -DTEST4 -DLOCKING_TIMING  -DWITH_MPI
+CFLAGS=$(FLAGS) 
+CXXFLAGS=$(FLAGS) -std=c++11
+FCFLAGS=$(FLAGS) 
 
 ELPA_LIB_DIR=/opt/apps/intel/16.0.3/elpa/2016.05.003/lib
 ELPA_INC_DIR=/opt/apps/intel/16.0.3/elpa/2016.05.003/include/elpa_openmp-2016.05.003
@@ -25,19 +26,19 @@ ELPA_INC=$(ELPA_INC_DIR)
 #ELPA_INC=-I/workspace/elpa/include/elpa-2014.06.001 -I/workspace/elpa/include/elpa-2014.06.001/modules -mod /workspace/elpa/include/elpa-2014.06.001/modules
 # main target
 #all : main tests
-all: elpa2_test_real_c_version
+all: elpa2_test_real_c_version main
 
 debug: 
-	$(MAKE) all CXXFLAGS="$(CXXFLAGS) -DPRINT_GATHER_DEBUG -DPRINT_GATHER_DEBUG_N=34"
+	$(MAKE) all FLAGS="$(FLAGS) -DPRINT_GATHER_DEBUG -DPRINT_GATHER_DEBUG_N=34"
 
-main : main.o  solve_provided.o test_input.o
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(ELPA_LIB)
+main : main.o test_input.o solve_provided.o utility.o
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(ELPA_LIB) -Wl,-rpath=/opt/intel/compilers_and_libraries_2016.3.210/linux/mkl/lib/intel64 -L/opt/intel/compilers_and_libraries_2016.3.210/linux/mkl/lib/intel64/ -lmkl_blacs_intelmpi_lp64 -lmkl_scalapack_lp64 -lifcoremt -lmkl_intel_lp64
 
 cleanobj:
 	rm -f *.o
 
 cleanexe:
-	rm -f main
+	rm -f main elpa2_test_real_c_version
 
 cleantests:
 	rm -f numroc_fortran_test test_real2 
@@ -60,6 +61,7 @@ clean: cleanobj cleanexe cleantests cleanoutput
 
 # C++ has so many strange pitfalls. But we live and learn
 main.o : main.cpp elpa_interface.hpp test_functions.hpp 
+	$(CXX) $(CXXFLAGS) -DUNIT_TESTS -DUTT_SOLVE -DUTT_EIGENDECOMPORIGINAL -c $< -o $@ -I$(ELPA_INC)
 
 #linking their new one
 
