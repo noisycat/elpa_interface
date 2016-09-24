@@ -172,7 +172,7 @@ int main(int argc, char** argv) {
    my_mpi_comm_world = MPI_Comm_c2f(MPI_COMM_WORLD);
    my_blacs_ctxt =  MPI_Comm_c2f(MPI_COMM_WORLD);
    const char order = 'C';
-   const int zero = 0;
+   const int zero_int = 0;
 #else
   my_mpi_comm_world = 1;
 #endif
@@ -197,12 +197,12 @@ int main(int argc, char** argv) {
      printf("Past split communicator setup for rows and columns...\n");
      printf("\n");
    }
-   na_rows = numroc_(&na, &nblk, &my_prow, &zero, &np_rows);
-   na_cols = numroc_(&na, &nblk, &my_pcol, &zero, &np_cols);
+   na_rows = numroc_(&na, &nblk, &my_prow, &zero_int, &np_rows);
+   na_cols = numroc_(&na, &nblk, &my_pcol, &zero_int, &np_cols);
 
-   sc_desc = malloc(9*sizeof(int));
+   sc_desc = (int*) malloc(9*sizeof(int));
 
-   descinit_( sc_desc, &na, &na, &nblk, &nblk, &zero, &zero, &my_blacs_ctxt, &na_rows, &info );
+   descinit_( sc_desc, &na, &na, &nblk, &nblk, &zero_int, &zero_int, &my_blacs_ctxt, &na_rows, &info );
 
    if (myid == 0) {
      printf("\n");
